@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Où va Mamie ?</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Comic Sans MS', cursive;
+      overflow: hidden;
+      background-color: #f0f8ff;
+    }
+
+    #intro {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #3498db;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      z-index: 9999;
+      animation: fadeOut 2s ease-in-out 2s forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    #map {
+      position: relative;
+      width: 110vw;
+      height: 100vh;
+      background: url('img/carte2.png') no-repeat;
+      background-size: 45%;
+      background-position: 40% center;
+      background-color: #3498db;
+    }
+
+    .point {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      background-image: url('img/pin.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.3s ease;
+    }
+
+    .popup {
+      position: absolute;
+      background: white;
+      border: 1px solid #aaa;
+      padding: 5px;
+      border-radius: 10px;
+      font-size: 0.8em;
+      white-space: nowrap;
+      display: none;
+      z-index: 20;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10001;
+    }
+
+    .modal-content {
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content img {
+      width: 35%;
+      height: auto;
+      border-radius: 0;
+    }
+
+    .photo {
+      display: none;
+    }
+
+    #surprise {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      font-size: 2em;
+      z-index: 10000;
+    }
+
+    .fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('img/fireworks.gif') center center / cover no-repeat;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      animation: fall 3s infinite;
+      z-index: 9999;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    .congrats-box {
+      background-color: #3498db;
+      padding: 20px;
+      border-radius: 20px;
+      color: white;
+      z-index: 10001;
+      box-shadow: 0 0 20px #fff;
+    }
+
+    #playMusicBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10001;
+      background: #fff;
+      padding: 10px 20px;
+      border: 2px solid #000;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="intro">Bienvenue dans la grande escapade !</div>
+<button id="playMusicBtn">🎵 Activer la musique</button>
+<div id="map"></div>
+
+<div id="surprise">
+  <div class="fireworks"></div>
+  <div class="congrats-box">
+    🎉 BRAVO MAMIE 🎉<br>
+    En recap : joyeux anniversaire <br>
+               prépare ta valise <br>
+               Bloque ton week-end pour nous! ❤️<br>
+  </div>
+</div>
+
+<div id="photoModal" class="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<audio id="bgMusic" loop>
+  <source src="audio/paris.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    const map = document.getElementById("map");
+    const music = document.getElementById("bgMusic");
+    const playBtn = document.getElementById("playMusicBtn");
+    const modal = document.getElementById("photoModal");
+    const modalContent = document.getElementById("modalContent");
+    const surprise = document.getElementById("surprise");
+  
+    let shouldShowSurprise = false;
+  
+    playBtn.addEventListener("click", () => {
+      music.play();
+      playBtn.style.display = "none";
+    });
+  
+    modal.addEventListener("click", () => {
+      modal.style.display = "none";
+  
+      // Afficher la surprise APRÈS fermeture du popup
+      if (shouldShowSurprise) {
+        surprise.style.display = "flex";
+        for (let i = 0; i < 100; i++) {
+          const confetti = document.createElement("div");
+          confetti.className = "confetti";
+          confetti.style.left = Math.random() * window.innerWidth + "px";
+          confetti.style.top = Math.random() * -100 + "px";
+          confetti.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+          confetti.style.animationDuration = (2 + Math.random() * 3) + "s";
+          document.body.appendChild(confetti);
+          setTimeout(() => confetti.remove(), 5000);
+        }
+        shouldShowSurprise = false;
+      }
+    });
+  
+    const members = [
+      {name: "Tonton Pierre", x: 52, y: 71, img: "img/sebastien.png"},
+      {name: "Tata Lucie", x: 46, y: 55, img: "img/rob.png"},
+      {name: "Cousin Jules", x: 55, y: 39, img: "img/gueho.png"},
+      {name: "Mamie", x: 31, y: 30, img: "img/petits.png"},
+      {name: "Tonton Pierre", x: 40, y: 63, img: "img/gars.png"},
+      {name: "Tata Lucie", x: 34, y: 75, img: "img/filles.png"},
+      {name: "Cousin Jules", x: 52, y: 50, img: "img/deglingo.png"},
+      {name: "Mamie", x: 47, y: 43, img: "img/fiesta.png"},
+      {name: "Tonton Pierre", x: 43, y: 79, img: "img/queen.png"},
+      {name: "Tata Lucie", x: 40, y: 35, img: "img/eqp.png"},
+      {name: "Cousin Jules", x: 50, y: 28, img: "img/famille.png"},
+      {name: "Mamie", x: 36, y: 49, img: "img/ado.png"},
+      {name: "Mamie", x: 44, y: 17, img: "img/final.png"}
+    ];
+  
+    members.forEach(m => m.clicked = false);
+  
+    members.forEach((m, index) => {
+      const point = document.createElement("div");
+      point.classList.add("point");
+      point.style.left = m.x + "%";
+      point.style.top = m.y + "%";
+      point.dataset.index = index;
+  
+      point.addEventListener("click", () => {
+        if (!m.clicked) {
+          m.clicked = true;
+          point.style.transform = "scale(1.2)";
+          point.style.filter = "grayscale(1)";
+          setTimeout(() => {
+            point.style.transform = "scale(1)";
+          }, 200);
+        }
+  
+        modal.style.display = "flex";
+        modalContent.innerHTML = `<img src="${m.img}" alt="${m.name}">`;
+  
+        const allClicked = members.every(mem => mem.clicked);
+        if (allClicked) {
+          shouldShowSurprise = true;
+        }
+      });
+  
+      map.appendChild(point);
+    });
+  </script>
+  
+
+</body>
+</html>
